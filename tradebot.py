@@ -16,6 +16,7 @@ import os
 import pyautogui
 import pytesseract
 from matplotlib import cm
+from pynput.keyboard import Listener, Key
 
 def getinfo(pflag):
     buy1 = normalizenumber(getnumber([360, 1260, 70, 30]))
@@ -89,6 +90,7 @@ def getnumber(coordl):
             return rtrvalue
         return text
 
+
 def getstring(coordl):
     with mss.mss() as sct:
         x, y, w, h = coordl
@@ -120,6 +122,7 @@ tmp1 = cv2.imread('images/ss2.png', 0)
 w, h = tmp0.shape[::-1]
 method = eval('cv2.TM_SQDIFF_NORMED')
 per = 1
+print('basladi')
 
 while (1):
     #cv2.circle(img, (top_left[0] + int(w/2), top_left[1] + int(h/2)), 6, (0, 255, 255), -1)
@@ -171,25 +174,25 @@ while (1):
 
             while x < totier:
                 
-                click(572, 402, 0.2)
-                click(tierstartcoord[0], tierstartcoord[1], 0.4)
+                click(572, 402, 0.1)
+                click(tierstartcoord[0], tierstartcoord[1], 0.1)
                 tierstartcoord[1] += 27
                 y = 0
                 enchstartcoord = [665, 431]
                 while y < 4:
                     
-                    click(725, 401, 0.2)
-                    click(enchstartcoord[0], enchstartcoord[1], 0.4)
+                    click(725, 401, 0.1)
+                    click(enchstartcoord[0], enchstartcoord[1], 0.1)
                     enchstartcoord[1] += 27
                     z = 0
                     goodstartcoord = [814, 429]
                     while z < 5:
                         
-                        click(878, 402, 0.2)
-                        click(goodstartcoord[0], goodstartcoord[1], 0.4),
+                        click(878, 402, 0.1)
+                        click(goodstartcoord[0], goodstartcoord[1], 0.3),
                         buy1, buy2, sell1, sell2 = getinfo(False)
                         goodstartcoord[1] += 27
-                        print(f"TIER: {x+totier} ENCH: {y} GOODNESS: {goodness[z]} -> BUY: {buy1}, {buy2} SELL: {sell1}, {sell2}")
+                        print(f"TIER: {x+totier-1} | ENCH: {y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}")
 
                         z += 1
                     y += 1
@@ -209,3 +212,7 @@ while (1):
             #f = open('tradebot.py', 'a+')
             #f.write(f"\n#BUY: {buy1}, {buy2}\n#SELL: {sell1}, {sell2}")
             #f.close()
+
+
+
+
