@@ -19,9 +19,9 @@ from matplotlib import cm
 
 def getinfo(pflag):
     buy1 = normalizenumber(getnumber([360, 1260, 70, 30]))
-    buy2 = normalizenumber(getnumber([360, 1360, 70, 30]))
+    buy2 = normalizenumber(getnumber([360, 1345, 70, 30]))
     sell1 = normalizenumber(getnumber([360, 1015, 70, 30]))
-    sell2 = normalizenumber(getnumber([360, 1090, 70, 30]))
+    sell2 = normalizenumber(getnumber([360, 1075, 70, 30]))
     if pflag:
         print(f"BUY: {buy1}, {buy2}")
         print(f"SELL: {sell1}, {sell2}")
@@ -30,6 +30,7 @@ def click(x, y, sleep=0):
     win32api.SetCursorPos((x, y))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
+    time.sleep(sleep)
 
 def programok():
     return
@@ -65,7 +66,7 @@ def sim_score(min_val, max_val, method):
 def getnumber(coordl):
     with mss.mss() as sct:
         x, y, w, h = coordl
-        method = eval('cv2.TM_SQDIFF_NORMED')
+        method = eval('cv2.TM_CCOEFF_NORMED')
         monitor = {"top": x, "left": y, "width": w, "height": h}
         ss = sct.grab(monitor)
         imageor = cv2.cvtColor(np.array(ss), cv2.COLOR_BGR2GRAY)
@@ -80,25 +81,10 @@ def getnumber(coordl):
         text = normalizenumber(text)
         #print(text)
         if text == '':
-            tmplist = []
-            simlist = []
-            for x in range(0, 10):
-                tmplist.append(cv2.imread('images/' + str(x) + '.png', 0))
-
-            for x in range(0, 10):
-                match = cv2.matchTemplate(image, tmplist[x], method)
-                min_val0, max_val0, min_loc0, max_loc0 = cv2.minMaxLoc(match)
-                #print(max_val0)
-                sim = sim_score(min_val0, max_val0, method)
-                #print(sim)
-                sim = int(str(sim)[2:9] + str(x))
-                simlist.append(sim)
             
-            print(simlist)
-            maxsim = max(simlist)
-            strmaxsim = str(maxsim)
-            rtrvalue = strmaxsim[len(strmaxsim)-1]
-            print("DÜZELTİLDİ: " + rtrvalue)
+            rtrvalue = pytesseract.image_to_string(image, config=custom_config)
+            if normalizenumber(rtrvalue) == '':
+                rtrvalue = '1'
             return rtrvalue
         return text
 
@@ -167,26 +153,22 @@ while (1):
             click(x, y)
             print("--- %s seconds ---" % (time.time() - start_timex))
             time.sleep(0.6)
-            click(572, 402) #tier menüsünü aç
-            time.sleep(0.2)
+            click(572, 402, 0.2) #tier menüsünü aç
             lowtier = normalizenumber(getstring([416, 458, 58, 21]).split(' ')[1])
             print(f"Tier: {lowtier}")
             totier = 8-int(lowtier)
             startcoord = [536, 428, 58, 21]
-            click(startcoord[0], startcoord[1])
-            time.sleep(0.5)
+            click(startcoord[0], startcoord[1], 0.5)
             getinfo(True)
-            '''
+            
             x = 0
             startcoord
             while x < totier:
                 startcoord[1] += 27
-                click(572, 402)
-                click(startcoord[0], startcoord[1])
-                time.sleep(0.2)
+                click(572, 402, 0.2)
+                click(startcoord[0], startcoord[1], 0.4)
                 getinfo(True)
                 x += 1
-                '''
 
             '''
             buy1 = normalizenumber(getstring([360, 1260, 70, 30]))
