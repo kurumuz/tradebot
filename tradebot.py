@@ -25,6 +25,7 @@ def getinfo(pflag):
     if pflag:
         print(f"BUY: {buy1}, {buy2}")
         print(f"SELL: {sell1}, {sell2}")
+    return [buy1, buy2, sell1, sell2]
 
 def click(x, y, sleep=0):
     win32api.SetCursorPos((x, y))
@@ -156,18 +157,42 @@ while (1):
             click(572, 402, 0.2) #tier menüsünü aç
             lowtier = normalizenumber(getstring([416, 458, 58, 21]).split(' ')[1])
             print(f"Tier: {lowtier}")
-            totier = 8-int(lowtier)
-            startcoord = [536, 428, 58, 21]
-            click(startcoord[0], startcoord[1], 0.5)
-            getinfo(True)
+            totier = 8-int(lowtier)+1
+            tierstartcoord = [536, 428, 58, 21]
+            enchstartcoord = [665, 431]
+            goodstartcoord = [814, 429]
+            goodness = ["Normal", "Good", "Outstanding", "Excellent", "Masterpiece"]
+            #click(tierstartcoord[0], tierstartcoord[1], 0.5)
+            #getinfo(True)
             
             x = 0
-            startcoord
+            y = 0
+            z = 0
+
             while x < totier:
-                startcoord[1] += 27
+                
                 click(572, 402, 0.2)
-                click(startcoord[0], startcoord[1], 0.4)
-                getinfo(True)
+                click(tierstartcoord[0], tierstartcoord[1], 0.4)
+                tierstartcoord[1] += 27
+                y = 0
+                enchstartcoord = [665, 431]
+                while y < 4:
+                    
+                    click(725, 401, 0.2)
+                    click(enchstartcoord[0], enchstartcoord[1], 0.4)
+                    enchstartcoord[1] += 27
+                    z = 0
+                    goodstartcoord = [814, 429]
+                    while z < 5:
+                        
+                        click(878, 402, 0.2)
+                        click(goodstartcoord[0], goodstartcoord[1], 0.4),
+                        buy1, buy2, sell1, sell2 = getinfo(False)
+                        goodstartcoord[1] += 27
+                        print(f"TIER: {x+totier} ENCH: {y} GOODNESS: {goodness[z]} -> BUY: {buy1}, {buy2} SELL: {sell1}, {sell2}")
+
+                        z += 1
+                    y += 1
                 x += 1
 
             '''
