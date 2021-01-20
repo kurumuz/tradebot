@@ -3,6 +3,7 @@ numbers/
 sdr-master/
 ss/
 tesres/
+mnist.pth
 
 .vscode/
 
