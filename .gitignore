@@ -4,6 +4,10 @@ sdr-master/
 ss/
 tesres/
 *.pth
+maybe/
+allah/
+char/
+data/
 
 .vscode/
 

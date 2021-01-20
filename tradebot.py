@@ -23,18 +23,58 @@ import threading
 
 def main():
     global enabled
+    global sscount
+    sscount = 0
+    
+    ss_count_init()
     enabled = True
     exitloop = RepeatedTimer(0.1, exitfunc)
     tmp0 = cv2.imread('images/ss1.png', 0) #read the button image
-
+    funclist = []
+    #funclist.append("get_price_info(x, y, z, goodness, totier)")
+    funclist.append("save_price_images()")
     while enabled:
         isButton = clickbutton(tmp0)
 
         if isButton:
-            get_item_info()
+            start_time = time.time()
+            run_item_loop(funclist)
+            print("ZAMAN: " + str(time.time()-start_time))
         
         time.sleep(0.5)
     
+def get_price_info(x, y, z, goodness, totier):
+    buy1, buy2, sell1, sell2 = getinfo(False)
+    print(f"TIER: {x+totier-1} | ENCH: {y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}")
+
+def get_ss(x, y, w, h):
+    monitor = {"top": y, "left": x, "width": w, "height": h}
+    with mss.mss() as sct:
+        ss = sct.grab(monitor)
+    return ss
+    
+def ss_count_init():
+    global sscount
+    files = os.listdir('ss/')
+    if files:
+        for z in range(0, len(files)):
+            files[z] = int(files[z].strip('.png'))
+
+        sscount = max(files) + 1
+
+    else:
+        sscount = 0
+
+def save_price_images():
+    global sscount
+    sell = get_ss(1263, 366, 1446-1263, 524-366)
+    mss.tools.to_png(sell.rgb, sell.size, output = "ss/" + str(sscount) + ".png")
+    sscount += 1
+    buy = get_ss(1021, 366, 1183-1021, 525-366)
+    mss.tools.to_png(buy.rgb, buy.size, output = "ss/" + str(sscount) + ".png")
+    sscount += 1
+    
+
 def clickbutton(tmp0):
     w, h = tmp0.shape[::-1]
     method = eval('cv2.TM_SQDIFF_NORMED')
@@ -60,43 +100,55 @@ def clickbutton(tmp0):
         else:
             return False
     
-def get_item_info():
+def run_item_loop(funclist):
     click(572, 402, 0.2) #tier menüsünü aç
     lowtier = normalizenumber(getstring([416, 458, 58, 21]).split(' ')[1])
     print(f"Tier: {lowtier}")
     totier = 8-int(lowtier)+1
     tierstartcoord = [536, 428, 58, 21]
-    enchstartcoord = [665, 431]
+    enchstartcoord = [665, 431 + 3 * 27]
     goodstartcoord = [814, 429]
     goodness = ["Normal", "Good", "Outstanding", "Excellent", "Masterpiece"]
     #click(tierstartcoord[0], tierstartcoord[1], 0.5)
     #getinfo(True)
-    
+    nonench = 4-int(lowtier)
+
     x = 0
     y = 0
     z = 0
 
     while x < totier:
-        
         click(572, 402, 0.1)
         click(tierstartcoord[0], tierstartcoord[1], 0.1)
         tierstartcoord[1] += 27
         y = 0
-        enchstartcoord = [665, 431]
+        z = 0
+        nonench -= 1
+        enchstartcoord = [665, 431 + 3 * 27]
         while y < 4:
-            
-            click(725, 401, 0.1)
-            click(enchstartcoord[0], enchstartcoord[1], 0.1)
-            enchstartcoord[1] += 27
-            z = 0
+            if nonench < 0:
+                click(725, 401, 0.1)
+                click(enchstartcoord[0], enchstartcoord[1], 0.1)
+                enchstartcoord[1] -= 27
+                z = 0
+
             goodstartcoord = [814, 429]
             while z < 5:
                 
                 click(878, 402, 0.1)
                 click(goodstartcoord[0], goodstartcoord[1], 0.3),
-                buy1, buy2, sell1, sell2 = getinfo(False)
                 goodstartcoord[1] += 27
-                print(f"TIER: {x+totier-1} | ENCH: {y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}")
+                #time.sleep(0.5)
+                buy1 = normalizenumber(getnumber([360, 1260, 70, 30]))
+                buy2 = normalizenumber(getnumber([360, 1345, 70, 30]))
+                sell1 = normalizenumber(getnumber([360, 1015, 70, 30]))
+                sell2 = normalizenumber(getnumber([360, 1075, 70, 30]))
+                
+                '''
+                if funclist:
+                    for func in funclist:
+                        eval(func)
+                '''
 
                 z += 1
             y += 1
@@ -110,10 +162,10 @@ def exitfunc():
         os._exit(0)
 
 def getinfo(pflag):
-    buy1 = normalizenumber(getnumber([360, 1260, 70, 30]))
-    buy2 = normalizenumber(getnumber([360, 1345, 70, 30]))
-    sell1 = normalizenumber(getnumber([360, 1015, 70, 30]))
-    sell2 = normalizenumber(getnumber([360, 1075, 70, 30]))
+    buy1 = normalizenumber(getnumbernn([360, 1260, 70, 30]))
+    buy2 = normalizenumber(getnumbernn([360, 1345, 70, 30]))
+    sell1 = normalizenumber(getnumbernn([360, 1015, 70, 30]))
+    sell2 = normalizenumber(getnumbernn([360, 1075, 70, 30]))
     if pflag:
         print(f"BUY: {buy1}, {buy2}")
         print(f"SELL: {sell1}, {sell2}")
@@ -155,6 +207,49 @@ def sim_score(min_val, max_val, method):
             return(max_val)
         else:
             return(0)
+
+def get_number_nn(coordl):
+    with mss.mss() as sct:
+        x, y, w, h = coordl
+        method = eval('cv2.TM_CCOEFF_NORMED')
+        monitor = {"top": x, "left": y, "width": w, "height": h}
+        ss = sct.grab(monitor)
+        img = cv2.resize(ss ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
+        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+        cv2.waitKey(0)
+
+        #binarize 
+        ret,thresh = cv2.threshold(gray,127,255,cv2.THRESH_BINARY_INV)
+        cv2.waitKey(0)
+
+        #find contours
+        ctrs, hier = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, 
+        cv2.CHAIN_APPROX_SIMPLE)
+
+        #sort contours
+        sorted_ctrs = sorted(ctrs, key=lambda ctr: cv2.boundingRect(ctr)[0])
+        for i, ctr in enumerate(sorted_ctrs):
+        # Get bounding box
+        x, y, w, h = cv2.boundingRect(ctr)
+        if h > 20:
+            # Getting ROI
+            if w < 18:
+                x = int(x - w/1.2)
+                w = 27
+
+            roi = gray[y:y+h, x:x+w]
+            #cv2.imsave()
+            roi = cv2.resize(roi, (28, 28), interpolation = cv2.INTER_AREA)
+            transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+            roitensor = transformation(roi).float()
+            roitensor = roitensor.unsqueeze_(0)
+            #NN
+            with torch.no_grad():
+                output = net(roitensor)
+                _, predicted = torch.max(output.data, 1)
+
+            return predicted.item()
 
 def getnumber(coordl):
     with mss.mss() as sct:
