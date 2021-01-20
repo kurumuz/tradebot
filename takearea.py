@@ -30,8 +30,6 @@ if files:
 else:
     y = 0
 
-
-
 def on_press(key):  # The function that's called when a key is pressed
     global x
     global y
