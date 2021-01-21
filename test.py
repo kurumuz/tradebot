@@ -36,10 +36,10 @@ img = cv2.imread('ss/211.png')
 
 
 imglist = os.listdir('ss/')
-for imgpoint in range(2, len(imglist)):
+for imgpoint in range(0, 120):
     start_time = time.time()
-    print(imglist[imgpoint])
-    img = cv2.imread('ss/' + imglist[imgpoint])
+    print(imgpoint)
+    img = cv2.imread('ss/' + str(imgpoint) + '.png')
     img = cv2.resize(img ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -63,31 +63,35 @@ for imgpoint in range(2, len(imglist)):
             # Getting ROI
             if w < 18:
                 x = int(x - w/1.2)
+                if x < 0:
+                    x = 0
                 w = 27
 
             roi = gray[y:y+h, x:x+w]
-            #cv2.imsave()
-            roi = cv2.resize(roi, (28, 28), interpolation = cv2.INTER_AREA)
-            transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-            roitensor = transformation(roi).float()
-            roitensor = roitensor.unsqueeze_(0)
+            if roi.any():
+                #print(roi)
+                #cv2.imsave()
+                roi = cv2.resize(roi, (28, 28), interpolation = cv2.INTER_AREA)
+                transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+                roitensor = transformation(roi).float()
+                roitensor = roitensor.unsqueeze_(0)
 
 
-            #NN
-            with torch.no_grad():
-                output = net(roitensor)
-                _, predicted = torch.max(output.data, 1)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            #print(predicted.item())
-            #print(output.data)
-            cv2.putText(img,str(predicted.item()),(x,y), font, 1,(255,255,255),2,cv2.LINE_AA)
-            # show ROI
-            #cv2.imwrite('roi_imgs.png', roi)
-            #cv2.imshow("test", roi)
-            cv2.rectangle(img,(x,y),( x + w, y + h ),(90,0,255),2)
-            #print(str(w) + ' , ' +  str(h))
-            #fuck = (x, y, )
-            cv2.waitKey(0)
+                #NN
+                with torch.no_grad():
+                    output = net(roitensor)
+                    _, predicted = torch.max(output.data, 1)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                #print(predicted.item())
+                #print(output.data)
+                cv2.putText(img,str(predicted.item()),(x,y-5), font, 1,(255,255,255),2,cv2.LINE_AA)
+                # show ROI
+                #cv2.imwrite('roi_imgs.png', roi)
+                #cv2.imshow("test", roi)
+                cv2.rectangle(img,(x,y),( x + w, y + h ),(90,0,255),2)
+                #print(str(w) + ' , ' +  str(h))
+                #fuck = (x, y, )
+                cv2.waitKey(0)
 
     print(str(time.time() - start_time))
     cv2.imshow('marked areas',img)

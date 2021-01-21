@@ -20,8 +20,35 @@ from pynput.keyboard import Listener, Key
 import time
 from threading import Event, Thread
 import threading
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+
+#TODO: CLEAN THE CODE UP
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(1, 10, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(10, 20, 5)
+        self.fc1 = nn.Linear(320, 50)
+        self.fc2 = nn.Linear(50, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 320)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+global net
+net = Net()
+PATH = './charbb.pth'
+net.load_state_dict(torch.load(PATH))
 
 def main():
+    print("basladi")
     global enabled
     global sscount
     sscount = 0
@@ -31,8 +58,8 @@ def main():
     exitloop = RepeatedTimer(0.1, exitfunc)
     tmp0 = cv2.imread('images/ss1.png', 0) #read the button image
     funclist = []
-    #funclist.append("get_price_info(x, y, z, goodness, totier)")
-    funclist.append("save_price_images()")
+    funclist.append("get_price_info(x, y, z, goodness, int(lowtier))")
+    #funclist.append("save_price_images()")
     while enabled:
         isButton = clickbutton(tmp0)
 
@@ -44,8 +71,8 @@ def main():
         time.sleep(0.5)
     
 def get_price_info(x, y, z, goodness, totier):
-    buy1, buy2, sell1, sell2 = getinfo(False)
-    print(f"TIER: {x+totier-1} | ENCH: {y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}")
+    buy1, buy2, sell1, sell2 = getinfo()
+    print(f"TIER: {x+totier} | ENCH: {3-y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}")
 
 def get_ss(x, y, w, h):
     monitor = {"top": y, "left": x, "width": w, "height": h}
@@ -138,17 +165,11 @@ def run_item_loop(funclist):
                 click(878, 402, 0.1)
                 click(goodstartcoord[0], goodstartcoord[1], 0.3),
                 goodstartcoord[1] += 27
-                #time.sleep(0.5)
-                buy1 = normalizenumber(getnumber([360, 1260, 70, 30]))
-                buy2 = normalizenumber(getnumber([360, 1345, 70, 30]))
-                sell1 = normalizenumber(getnumber([360, 1015, 70, 30]))
-                sell2 = normalizenumber(getnumber([360, 1075, 70, 30]))
+                #time.sleep(0.3)
                 
-                '''
                 if funclist:
                     for func in funclist:
                         eval(func)
-                '''
 
                 z += 1
             y += 1
@@ -161,14 +182,11 @@ def exitfunc():
         enabled = False
         os._exit(0)
 
-def getinfo(pflag):
+def getinfo():
     buy1 = normalizenumber(getnumbernn([360, 1260, 70, 30]))
     buy2 = normalizenumber(getnumbernn([360, 1345, 70, 30]))
     sell1 = normalizenumber(getnumbernn([360, 1015, 70, 30]))
     sell2 = normalizenumber(getnumbernn([360, 1075, 70, 30]))
-    if pflag:
-        print(f"BUY: {buy1}, {buy2}")
-        print(f"SELL: {sell1}, {sell2}")
     return [buy1, buy2, sell1, sell2]
 
 def click(x, y, sleep=0):
@@ -208,12 +226,13 @@ def sim_score(min_val, max_val, method):
         else:
             return(0)
 
-def get_number_nn(coordl):
+def getnumbernn(coordl):
+    global net
     with mss.mss() as sct:
         x, y, w, h = coordl
         method = eval('cv2.TM_CCOEFF_NORMED')
         monitor = {"top": x, "left": y, "width": w, "height": h}
-        ss = sct.grab(monitor)
+        ss = numpy.array(sct.grab(monitor))
         img = cv2.resize(ss ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -229,27 +248,33 @@ def get_number_nn(coordl):
 
         #sort contours
         sorted_ctrs = sorted(ctrs, key=lambda ctr: cv2.boundingRect(ctr)[0])
+        predicted_str = ""
         for i, ctr in enumerate(sorted_ctrs):
         # Get bounding box
-        x, y, w, h = cv2.boundingRect(ctr)
-        if h > 20:
-            # Getting ROI
-            if w < 18:
-                x = int(x - w/1.2)
-                w = 27
+            x, y, w, h = cv2.boundingRect(ctr)
+            if h > 20:
+                # Getting ROI
+                if w < 18:
+                    x = int(x - w/1.2)
+                    if x < 0:
+                        x = 0
+                    w = 27
 
-            roi = gray[y:y+h, x:x+w]
-            #cv2.imsave()
-            roi = cv2.resize(roi, (28, 28), interpolation = cv2.INTER_AREA)
-            transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-            roitensor = transformation(roi).float()
-            roitensor = roitensor.unsqueeze_(0)
-            #NN
-            with torch.no_grad():
-                output = net(roitensor)
-                _, predicted = torch.max(output.data, 1)
-
-            return predicted.item()
+                roi = gray[y:y+h, x:x+w]
+                #cv2.imsave()
+                if roi.any():
+                    roi = cv2.resize(roi, (28, 28), interpolation = cv2.INTER_AREA)
+                    transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+                    roitensor = transformation(roi).float()
+                    roitensor = roitensor.unsqueeze_(0)
+                    #NN
+                    with torch.no_grad():
+                        output = net(roitensor)
+                        _, predicted = torch.max(output.data, 1)
+                        predicted_str += str(predicted.item())
+                else:
+                    print("FUCK")
+        return predicted_str
 
 def getnumber(coordl):
     with mss.mss() as sct:
