@@ -12,35 +12,11 @@ transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5,), (0.5,))])
 
-trainset = torchvision.datasets.MNIST(root='./data', train=True,
-                                        download=True, transform=transform)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=0)
-
-testset = torchvision.datasets.MNIST(root='./data', train=False,
-                                       download=True, transform=transform)
-
-testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                         shuffle=False, num_workers=0)
-
-classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
-
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
-
-'''
-# get some random training images
-dataiter = iter(trainloader)
-images, labels = dataiter.next()
-
-# show images
-imshow(torchvision.utils.make_grid(images))
-# print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
-'''
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -67,7 +43,7 @@ net = Net()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 net.to(device)
-#net.load_state_dict(torch.load("mnist.pth"))
+#net.load_state_dict(torch.load("charb.pth"))
 import torch.optim as optim
 
 criterion = nn.CrossEntropyLoss()
@@ -76,8 +52,8 @@ optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 imagesx = []
 
-for path in os.listdir('allah/'):
-    imagesx.append(cv2.imread('allah/' + path, 0))
+for x in range(0, 30):
+    imagesx.append(cv2.imread('allah/' + str(x) + ".png", 0))
 
 imagesmore = []
 
@@ -95,38 +71,32 @@ for i in range(0, 33):
     for label in labelsx:
         labelsmore.append(label) 
 
-print(len(labelsmore))
+print(len(labelsx))
 
-''''
-tlabels = []
-for i in range(0, len(labels)):
-    label_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    label_list[int(labels[i])] = 1
-    b = torch.FloatTensor(label_list)
-    tlabels.append(b)
-'''
+mapIndexPosition = list(zip(imagesmore, labelsmore))
+random.shuffle(mapIndexPosition)
+imagesmore, labelsmore = zip(*mapIndexPosition)
 
 tlabels = []
 for i in range(0, len(labelsmore)):
     b = torch.tensor([int(labelsmore[i])], dtype=torch.long)
     tlabels.append(b)
 
-#for xak in tlabels:
-#    print(xak)
-
-timages = []
 transformation = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
 
 
-
+timages = []
 for i in range(0, len(imagesmore)):
     timages.append(transformation(imagesmore[i]).float().unsqueeze_(0))
 
-mapIndexPosition = list(zip(timages, tlabels))
-random.shuffle(timages)
-timages, tlabels = zip(*mapIndexPosition)
+'''
+for i in range(0, 40):
+    print("f", labelsmore[i])
+    cv2.imshow("f", imagesmore[i])
+    cv2.waitKey(0)
+'''
 
-for epoch in range(50):  # loop over the dataset multiple times
+for epoch in range(10):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i in range(0, len(timages)):
@@ -152,7 +122,9 @@ for epoch in range(50):  # loop over the dataset multiple times
 
 print('Finished Training')
 
-torch.save(net.state_dict(), "charb.pth")
+torch.save(net.state_dict(), "charbb.pth")
+
+#Test
 '''
 PATH = './mnist.pth'
 net.load_state_dict(torch.load(PATH))

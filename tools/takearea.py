@@ -14,7 +14,7 @@ global x
 global posleft
 global y
 
-print("bas")
+print("started")
 
 x = 0
 posleft = ""
@@ -51,8 +51,11 @@ def on_press(key):  # The function that's called when a key is pressed
                 print(f'"top": {posleft[1]}, "left": {posleft[0]}, "width": {poscurr[0]-posleft[0]}, "height": {poscurr[1]-posleft[1]}')
                 monitor = {"top": posleft[1], "left": posleft[0], "width": poscurr[0]-posleft[0], "height": poscurr[1]-posleft[1]}
                 with mss.mss() as sct:
+                    #mss.tools.to_png(ss.rgb, ss.size, output = "ss/" + str(y) + ".png") # if you dont want to scale the image
                     ss = sct.grab(monitor)
-                    mss.tools.to_png(ss.rgb, ss.size, output = "ss/" + str(y) + ".png")
+                    ss = numpy.array(ss)
+                    ss = cv2.resize(ss ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
+                    cv2.imwrite("ss/" + str(y) + ".png", ss)
                 y += 1
                 x = 0
                 posleft = ""

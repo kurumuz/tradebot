@@ -3,11 +3,15 @@ numbers/
 sdr-master/
 ss/
 tesres/
-*.pth
+char.pth
+charb.pth
+mnist.pth
 maybe/
 allah/
 char/
 data/
+bot.py
+label.txt
 
 .vscode/
 

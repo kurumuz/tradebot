@@ -13,6 +13,7 @@ if files:
     sscount = max(files) + 1
 
 else:
+    
     sscount = 0
 
 
