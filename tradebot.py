@@ -44,7 +44,7 @@ class Net(nn.Module):
 
 global net
 net = Net()
-PATH = './charbb.pth'
+PATH = './weights/digits.pth'
 net.load_state_dict(torch.load(PATH))
 
 def main():
@@ -58,8 +58,8 @@ def main():
     exitloop = RepeatedTimer(0.1, exitfunc)
     tmp0 = cv2.imread('images/ss1.png', 0) #read the button image
     funclist = []
-    funclist.append("get_price_info(x, y, z, goodness, int(lowtier))")
-    #funclist.append("save_price_images()")
+    #funclist.append("get_price_info(x, y, z, goodness, int(lowtier))")
+    funclist.append("save_price_images()")
     while enabled:
         isButton = clickbutton(tmp0)
 
@@ -95,13 +95,18 @@ def ss_count_init():
 def save_price_images():
     global sscount
     sell = get_ss(1263, 366, 1446-1263, 524-366)
-    mss.tools.to_png(sell.rgb, sell.size, output = "ss/" + str(sscount) + ".png")
+    sell = np.array(sell)
+    sell = cv2.resize(sell ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
+    cv2.imwrite("ss/" + str(sscount) + ".png", sell)
+    #mss.tools.to_png(sell.rgb, sell.size, output = "ss/" + str(sscount) + ".png")
     sscount += 1
     buy = get_ss(1021, 366, 1183-1021, 525-366)
-    mss.tools.to_png(buy.rgb, buy.size, output = "ss/" + str(sscount) + ".png")
+    buy = np.array(buy)
+    buy = cv2.resize(buy ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
+    cv2.imwrite("ss/" + str(sscount) + ".png", buy)
+    #mss.tools.to_png(buy.rgb, buy.size, output = "ss/" + str(sscount) + ".png")
     sscount += 1
     
-
 def clickbutton(tmp0):
     w, h = tmp0.shape[::-1]
     method = eval('cv2.TM_SQDIFF_NORMED')
@@ -299,8 +304,8 @@ def getnumber(coordl):
             if normalizenumber(rtrvalue) == '':
                 rtrvalue = '1'
             return rtrvalue
-        return text
 
+        return text
 
 def getstring(coordl):
     with mss.mss() as sct:

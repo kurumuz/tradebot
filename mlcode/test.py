@@ -6,7 +6,6 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 import time
 import os   
-#read image
 
 class Net(nn.Module):
     def __init__(self):
@@ -25,22 +24,17 @@ class Net(nn.Module):
         x = self.fc2(x)
         return x
 
-
 net = Net()
-PATH = './charbb.pth'
+PATH = './digits.pth'
 net.load_state_dict(torch.load(PATH))
 
-img = cv2.imread('ss/211.png')
-
 #grayscale
-
-
 imglist = os.listdir('ss/')
-for imgpoint in range(0, 120):
+for imgpoint in range(0, len(imglist)):
     start_time = time.time()
     print(imgpoint)
     img = cv2.imread('ss/' + str(imgpoint) + '.png')
-    img = cv2.resize(img ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
+    #img = cv2.resize(img ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC) #if you want to scale the image
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
     cv2.waitKey(0)
@@ -76,21 +70,19 @@ for imgpoint in range(0, 120):
                 roitensor = transformation(roi).float()
                 roitensor = roitensor.unsqueeze_(0)
 
-
                 #NN
                 with torch.no_grad():
                     output = net(roitensor)
                     _, predicted = torch.max(output.data, 1)
                 font = cv2.FONT_HERSHEY_SIMPLEX
+
                 #print(predicted.item())
                 #print(output.data)
                 cv2.putText(img,str(predicted.item()),(x,y-5), font, 1,(255,255,255),2,cv2.LINE_AA)
-                # show ROI
+                #show ROI
                 #cv2.imwrite('roi_imgs.png', roi)
                 #cv2.imshow("test", roi)
                 cv2.rectangle(img,(x,y),( x + w, y + h ),(90,0,255),2)
-                #print(str(w) + ' , ' +  str(h))
-                #fuck = (x, y, )
                 cv2.waitKey(0)
 
     print(str(time.time() - start_time))
