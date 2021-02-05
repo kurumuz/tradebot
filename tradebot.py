@@ -5,13 +5,12 @@ import numpy as np
 import mss
 import mss.tools
 from PIL import Image
-import time
 import sys
 import numpy
 import cv2
 import keyboard
 import win32api, win32com
-import win32con
+import win32con, win32clipboard
 import os
 import pyautogui
 import pytesseract
@@ -43,6 +42,8 @@ class Net(nn.Module):
         return x
 
 global net
+global output
+output = open("output", "a+")
 net = Net()
 PATH = './weights/digits.pth'
 net.load_state_dict(torch.load(PATH))
@@ -62,12 +63,53 @@ def main():
     funclist.append("get_price_info(x, y, z, goodness, int(lowtier))")
     #funclist.append("save_price_images()")
     coordlist = [[401, 661, 284, 54], [492, 661, 284, 54], [584, 661, 284, 54], [675, 661, 284, 54], [761, 661, 284, 54], [851, 661, 284, 54]]
-    item_dict = ['']
+    dict_file = open("item_names", "r")
+    item_dict = dict_file.read().split('\n')
+    dict_file.close()
+    #item_dict = ["Novice's Mercenary Shoes", "Novice's Soldier Helmet", "Adept's Dagger Pair"]
     button_coord = [406, 1224, 110, 38]
+
     firstseen = False
     while enabled:
         name = ""
         is_clicked = False
+
+        for x in range(0, len(item_dict)):
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            test = item_dict[x]
+            win32clipboard.SetClipboardText(test, win32con.CF_TEXT)
+            win32clipboard.CloseClipboard()
+            #Point(x=609, y=265)
+            win32api.SetCursorPos((609, 265))
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,609,265,0,0)
+            time.sleep(0.1)
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,609,265,0,0)
+            time.sleep(0.1)
+            keyboard.press_and_release('ctrl+a')
+            keyboard.press_and_release('backspace')
+            keyboard.press_and_release('ctrl+v')
+            time.sleep(0.1)
+            #name = normalizestring(getstring(coordlist[0]))
+            print("name:" + item_dict[x] + "|")
+            output.write("| " + item_dict[x] + "| : \n")
+            if True: #if not name == ''
+                is_clicked = clickbutton(tmp0, button_coord)
+                if is_clicked:
+                    start_time = time.time()
+                    run_info_loop(funclist)
+                    click(937, 312, 0.3) #close the menu
+                    print("ZAMAN: " + str(time.time()-start_time))
+                else:
+                    print("İtem yok, atlanıyor.") #TODO: handle non existant items better by skipping over them.
+
+        print("BİTTİ!")
+        output.close()
+        enabled = False
+
+        
+
+        '''
         for x in range(0, 5):
             #print(x)
 
@@ -89,11 +131,8 @@ def main():
 
                 print("ZAMAN: " + str(time.time()-start_time))
                 button_coord[0] += 90
+            '''
                     
-
-
-
-
 '''
             new_name = normalizestring(getstring(coordlist[x]))
             if new_name == name or name == "": #if there is a new item
@@ -110,7 +149,15 @@ def main():
     
 def get_price_info(x, y, z, goodness, totier):
     buy1, buy2, sell1, sell2 = getinfo()
-    print(f"TIER: {x+totier} | ENCH: {3-y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}")
+    if buy1 == "6009091160905401011":
+        buy1 = "NOT"
+
+    if buy2 == "959146124900112666":
+        buy2 = "BUYING"
+        
+    info = f"TIER: {x+totier} | ENCH: {3-y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}"
+    print(info)
+    output.writelines(info + "\n")
 
 def get_ss(x, y, w, h):
     monitor = {"top": y, "left": x, "width": w, "height": h}
