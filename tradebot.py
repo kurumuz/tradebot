@@ -58,17 +58,55 @@ def main():
     exitloop = RepeatedTimer(0.1, exitfunc)
     tmp0 = cv2.imread('images/ss1.png', 0) #read the button image
     funclist = []
-    #funclist.append("get_price_info(x, y, z, goodness, int(lowtier))")
-    funclist.append("save_price_images()")
-    while enabled:
-        isButton = clickbutton(tmp0)
 
-        if isButton:
-            start_time = time.time()
-            run_item_loop(funclist)
-            print("ZAMAN: " + str(time.time()-start_time))
+    funclist.append("get_price_info(x, y, z, goodness, int(lowtier))")
+    #funclist.append("save_price_images()")
+    coordlist = [[401, 661, 284, 54], [492, 661, 284, 54], [584, 661, 284, 54], [675, 661, 284, 54], [761, 661, 284, 54], [851, 661, 284, 54]]
+    item_dict = ['']
+    button_coord = [406, 1224, 110, 38]
+    firstseen = False
+    while enabled:
+        name = ""
+        is_clicked = False
+        for x in range(0, 5):
+            #print(x)
+
+            name = normalizestring(getstring(coordlist[x]))
+            print("name:" + name + "|")
+            if x == 0 and name == "":
+                break
+            #print("test")
+            is_clicked = clickbutton(tmp0, button_coord)
+
+            if x == 0 and is_clicked == False:
+                break
+            #print("test2")
+            if is_clicked:
+                start_time = time.time()
+                print(name + ": \n----------------")
+                run_info_loop(funclist)
+                click(937, 312, 0.3) #close the menu
+
+                print("ZAMAN: " + str(time.time()-start_time))
+                button_coord[0] += 90
+                    
+
+
+
+
+'''
+            new_name = normalizestring(getstring(coordlist[x]))
+            if new_name == name or name == "": #if there is a new item
+
+                name = normalizestring(getstring(coordlist[x]))
+
+
         
-        time.sleep(0.5)
+        if more_item:
+            start_time = time.time()
+            run_info_loop(funclist)
+            print("ZAMAN: " + str(time.time()-start_time))
+'''
     
 def get_price_info(x, y, z, goodness, totier):
     buy1, buy2, sell1, sell2 = getinfo()
@@ -107,14 +145,14 @@ def save_price_images():
     #mss.tools.to_png(buy.rgb, buy.size, output = "ss/" + str(sscount) + ".png")
     sscount += 1
     
-def clickbutton(tmp0):
+def clickbutton(tmp0, coord):
     w, h = tmp0.shape[::-1]
     method = eval('cv2.TM_SQDIFF_NORMED')
 
     if enabled is True:
         start_timex = time.time()
         with mss.mss() as sct:
-            monitor = {"top": 170, "left":560 , "width": 850, "height": 600}
+            monitor = {"top": coord[0], "left":coord[1] , "width": coord[2], "height": coord[3]}
             img = cv2.cvtColor(np.array(sct.grab(monitor)), cv2.COLOR_BGR2GRAY)
             res0 = cv2.matchTemplate(img, tmp0, method)
         
@@ -123,20 +161,29 @@ def clickbutton(tmp0):
         
 
         if sim0 > 0.92:
-            x = int(560 + int(min_loc0[0]) + int(w/2))
-            y = int(170 + int(min_loc0[1]) + int(h/2))
+            x = int(coord[1] + int(min_loc0[0]) + int(w/2))
+            y = int(coord[0] + int(min_loc0[1]) + int(h/2))
             click(x, y, 0.6)
             print(sim0)
             return True
             
         else:
             return False
-    
-def run_item_loop(funclist):
+
+def run_list_loop():
+    return
+
+def run_info_loop(funclist):
     click(572, 402, 0.2) #tier menüsünü aç
     lowtier = normalizenumber(getstring([416, 458, 58, 21]).split(' ')[1])
+    try:
+        lowtier = lowtier
+
+    except:
+        lowtier= 1
     print(f"Tier: {lowtier}")
     totier = 8-int(lowtier)+1
+    totier = 2
     tierstartcoord = [536, 428, 58, 21]
     enchstartcoord = [665, 431 + 3 * 27]
     goodstartcoord = [814, 429]
@@ -157,7 +204,7 @@ def run_item_loop(funclist):
         z = 0
         nonench -= 1
         enchstartcoord = [665, 431 + 3 * 27]
-        while y < 4:
+        while y < 1:
             if nonench < 0:
                 click(725, 401, 0.1)
                 click(enchstartcoord[0], enchstartcoord[1], 0.1)
@@ -165,7 +212,7 @@ def run_item_loop(funclist):
                 z = 0
 
             goodstartcoord = [814, 429]
-            while z < 5:
+            while z < 1:
                 
                 click(878, 402, 0.1)
                 click(goodstartcoord[0], goodstartcoord[1], 0.3),
@@ -200,11 +247,23 @@ def click(x, y, sleep=0):
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
     time.sleep(sleep)
 
+def wheel_event(move):
+    win32api.mouse_event(MOUSEEVENTF_WHEEL, x, y, move, 0)
+
 def programok():
     return
 
 def normalizenumber(text):
     istenmeyen = [' ', '\n', '\x0c', ',', '.']
+    rtrtext = ""
+    for char in text:
+        if not char in istenmeyen:
+            rtrtext += char
+    
+    return rtrtext
+
+def normalizestring(text):
+    istenmeyen = ['\n', '\x0c', ',', '.']
     rtrtext = ""
     for char in text:
         if not char in istenmeyen:
@@ -248,8 +307,7 @@ def getnumbernn(coordl):
         cv2.waitKey(0)
 
         #find contours
-        ctrs, hier = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, 
-        cv2.CHAIN_APPROX_SIMPLE)
+        ctrs, hier = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         #sort contours
         sorted_ctrs = sorted(ctrs, key=lambda ctr: cv2.boundingRect(ctr)[0])
