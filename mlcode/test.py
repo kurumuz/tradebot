@@ -25,12 +25,12 @@ class Net(nn.Module):
         return x
 
 net = Net()
-PATH = './digits.pth'
+PATH = './weights/digits.pth'
 net.load_state_dict(torch.load(PATH))
 
 #grayscale
 imglist = os.listdir('ss/')
-for imgpoint in range(0, len(imglist)):
+for imgpoint in range(518, 521):
     start_time = time.time()
     print(imgpoint)
     img = cv2.imread('ss/' + str(imgpoint) + '.png')

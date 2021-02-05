@@ -154,7 +154,7 @@ def get_price_info(x, y, z, goodness, totier):
 
     if buy2 == "959146124900112666":
         buy2 = "BUYING"
-        
+
     info = f"TIER: {x+totier} | ENCH: {3-y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}"
     print(info)
     output.writelines(info + "\n")
@@ -222,12 +222,9 @@ def run_list_loop():
 
 def run_info_loop(funclist):
     click(572, 402, 0.2) #tier menüsünü aç
-    lowtier = normalizenumber(getstring([416, 458, 58, 21]).split(' ')[1])
-    try:
-        lowtier = lowtier
-
-    except:
-        lowtier= 1
+    #lowtier = normalizenumber(getstring([416, 458, 58, 21]).split(' ')[1])
+    lowtier = getnumbernn([421, 495, 14, 14]) #read lowest tier with NN instead.
+    #"top": 421, "left": 497, "width": 14, "height": 14
     print(f"Tier: {lowtier}")
     totier = 8-int(lowtier)+1
     totier = 2
