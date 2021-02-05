@@ -155,6 +155,12 @@ def get_price_info(x, y, z, goodness, totier):
     if buy2 == "959146124900112666":
         buy2 = "BUYING"
 
+    if sell1 == "0260905401019296696":
+        sell1 = "NOT"
+
+    if sell2 == "9591461254601002663":
+        sell2 = "SELLING"
+
     info = f"TIER: {x+totier} | ENCH: {3-y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}"
     print(info)
     output.writelines(info + "\n")
@@ -227,7 +233,6 @@ def run_info_loop(funclist):
     #"top": 421, "left": 497, "width": 14, "height": 14
     print(f"Tier: {lowtier}")
     totier = 8-int(lowtier)+1
-    totier = 2
     tierstartcoord = [536, 428, 58, 21]
     enchstartcoord = [665, 431 + 3 * 27]
     goodstartcoord = [814, 429]
@@ -248,7 +253,7 @@ def run_info_loop(funclist):
         z = 0
         nonench -= 1
         enchstartcoord = [665, 431 + 3 * 27]
-        while y < 1:
+        while y < 4:
             if nonench < 0:
                 click(725, 401, 0.1)
                 click(enchstartcoord[0], enchstartcoord[1], 0.1)
@@ -256,7 +261,7 @@ def run_info_loop(funclist):
                 z = 0
 
             goodstartcoord = [814, 429]
-            while z < 1:
+            while z < 5:
                 
                 click(878, 402, 0.1)
                 click(goodstartcoord[0], goodstartcoord[1], 0.3),
