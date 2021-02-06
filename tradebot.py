@@ -6,7 +6,6 @@ import mss
 import mss.tools
 from PIL import Image
 import sys
-import numpy
 import cv2
 import keyboard
 import win32api, win32com
@@ -22,6 +21,7 @@ import threading
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+import math
 
 #TODO: CLEAN THE CODE UP
 class Net(nn.Module):
@@ -41,12 +41,16 @@ class Net(nn.Module):
         x = self.fc2(x)
         return x
 
+LOAD_NET=False
+
 global net
 global output
 output = open("output", "a+")
-net = Net()
-PATH = './weights/digits.pth'
-net.load_state_dict(torch.load(PATH))
+
+if LOAD_NET:
+    net = Net()
+    PATH = './weights/digits.pth'
+    net.load_state_dict(torch.load(PATH))
 
 def main():
     print("basladi")
@@ -70,6 +74,7 @@ def main():
     button_coord = [406, 1224, 110, 38]
 
     firstseen = False
+    enabled = False
     while enabled:
         name = ""
         is_clicked = False
@@ -107,45 +112,81 @@ def main():
         output.close()
         enabled = False
 
+    enabled2 = True
+    time.sleep(1)
+    while enabled2:
+        img = get_ss_numpy(1562, 806, 357, 273)
+        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        img = cv2.imread("testmap2.png")
+        xf, yf = findflag(img)
+        xm, ym = findme(img)
         
+        #flength = math.sqrt(xf*xf + yf*yf)  
+        #mlength = math.sqrt(xm*xm + ym*ym)
+        #yf = -xf*math.sin(45) + yf*math.cos(45)
+        #ym = -xm*math.sin(45) + ym*math.cos(45)
+        print(f"flag: {xf}, {yf}\n me: {xm}, {ym}")
+        move = False
+        if move:
 
-        '''
-        for x in range(0, 5):
-            #print(x)
-
-            name = normalizestring(getstring(coordlist[x]))
-            print("name:" + name + "|")
-            if x == 0 and name == "":
-                break
-            #print("test")
-            is_clicked = clickbutton(tmp0, button_coord)
-
-            if x == 0 and is_clicked == False:
-                break
-            #print("test2")
-            if is_clicked:
-                start_time = time.time()
-                print(name + ": \n----------------")
-                run_info_loop(funclist)
-                click(937, 312, 0.3) #close the menu
-
-                print("ZAMAN: " + str(time.time()-start_time))
-                button_coord[0] += 90
             '''
-                    
-'''
-            new_name = normalizestring(getstring(coordlist[x]))
-            if new_name == name or name == "": #if there is a new item
-
-                name = normalizestring(getstring(coordlist[x]))
+            if xm - xf > 12: #moveleft
+                right_click(693, 263)
 
 
-        
-        if more_item:
-            start_time = time.time()
-            run_info_loop(funclist)
-            print("ZAMAN: " + str(time.time()-start_time))
-'''
+            if xf - xm > 12: #moveright
+                right_click(1432, 754)
+
+            '''
+            if ym - yf > 6: #moveup
+                click(605, 661)
+                
+
+            if yf - ym > 6: #movedown
+                click(1257, 256)
+
+        time.sleep(0.7)
+
+
+def findme(img):
+    frame = img
+    #cv2.imshow("test", img)
+    #cv2.waitKey(0)
+    lower_blue = np.array([255,160,80])
+    upper_blue = np.array([255,200,110])
+
+    mask = cv2.inRange(img,lower_blue,upper_blue)
+    #cv2.imshow("mask", mask)
+    xm, ym = 0, 0
+    cnts, hier = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    sorted_ctrs = sorted(cnts, key=lambda ctr: cv2.boundingRect(ctr)[0])
+    for i, ctr in enumerate(sorted_ctrs):
+        xm, ym, w, h = cv2.boundingRect(ctr)
+        cv2.rectangle(frame,(xm,ym),( xm + w, ym + h ),(90,0,255),2)
+        #cv2.imshow("ctr", frame)
+        xm, ym = xm + w/2, ym + h/2
+    cv2.imshow("me", frame)
+    cv2.waitKey(0)
+    return xm, ym
+
+def findflag(img):
+    xm, ym = 0, 0
+    framegray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    tmp0 = cv2.imread("flag.png", 0)
+    w, h = tmp0.shape[::-1]
+    method = eval('cv2.TM_SQDIFF_NORMED')
+    res0 = cv2.matchTemplate(framegray, tmp0, method)
+    min_val0, max_val0, min_loc0, max_loc0 = cv2.minMaxLoc(res0)
+    xf, yf = min_loc0[0], min_loc0[1]
+    if (1 - min_val0) < 1:
+        if (1 - min_val0) > 0.8:
+            cv2.rectangle(img,(xf,yf),( xf + w, yf + h ),(90,0,255),2)
+            xf = xf + w/2
+            yf = yf + h/2
+
+    #cv2.imshow("flag", img)
+    #cv2.waitKey(0)
+    return xf, yf
     
 def get_price_info(x, y, z, goodness, totier):
     buy1, buy2, sell1, sell2 = getinfo()
@@ -169,6 +210,14 @@ def get_ss(x, y, w, h):
     monitor = {"top": y, "left": x, "width": w, "height": h}
     with mss.mss() as sct:
         ss = sct.grab(monitor)
+    return ss
+
+def get_ss_numpy(x, y, w, h):
+    monitor = {"top": y, "left": x, "width": w, "height": h}
+    with mss.mss() as sct:
+        ss = sct.grab(monitor)
+        ss = np.array(ss)
+        #ss = cv2.resize(ss ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
     return ss
     
 def ss_count_init():
@@ -296,6 +345,12 @@ def click(x, y, sleep=0):
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
     time.sleep(sleep)
 
+def right_click(x, y, sleep=0):
+    win32api.SetCursorPos((x, y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN,x,y,0,0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP,x,y,0,0)
+    time.sleep(sleep)
+
 def wheel_event(move):
     win32api.mouse_event(MOUSEEVENTF_WHEEL, x, y, move, 0)
 
@@ -345,7 +400,7 @@ def getnumbernn(coordl):
         x, y, w, h = coordl
         method = eval('cv2.TM_CCOEFF_NORMED')
         monitor = {"top": x, "left": y, "width": w, "height": h}
-        ss = numpy.array(sct.grab(monitor))
+        ss = np.array(sct.grab(monitor))
         img = cv2.resize(ss ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
