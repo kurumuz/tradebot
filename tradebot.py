@@ -42,7 +42,7 @@ class Net(nn.Module):
         return x
 
 LOAD_NET=False
-
+LOAD_YOLOV=True
 global net
 global output
 output = open("output", "a+")
@@ -51,6 +51,13 @@ if LOAD_NET:
     net = Net()
     PATH = './weights/digits.pth'
     net.load_state_dict(torch.load(PATH))
+
+if LOAD_YOLOV:
+    device = torch.device("cuda")
+    model = torch.hub.load('ultralytics/yolov5', 'yolov5s', classes=4)  # for file/URI/PIL/cv2/np inputs and NMS
+    model.load_state_dict(torch.load('weights/best.pt')['model'].state_dict())
+    model = model.fuse().autoshape()
+    model.to(device)
 
 def main():
     print("basladi")
@@ -114,10 +121,23 @@ def main():
 
     enabled2 = True
     time.sleep(1)
+    enabled3 = True
+    while enabled3:
+        sct_img = get_ss(0, 0, 1920, 1080)
+        result = model(sct_img, size=800)
+        if result.xyxy:
+            for match in result.xyxy[0]:
+                if (match[5] == 1.0 and match[4] > 0.6):
+                    xcenter, ycenter = match[0] + (match[2] - match[0]) / 2, match[1] + (match[3] - match[1]) / 2
+                    click(int(xcenter), int(ycenter), 0.9)
+                    enabled3 = False
+
+                    
+    '''
     while enabled2:
         img = get_ss_numpy(1562, 806, 357, 273)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-        img = cv2.imread("testmap2.png")
+        img = rotate_image(img, 45)
         xf, yf = findflag(img)
         xm, ym = findme(img)
         
@@ -126,27 +146,40 @@ def main():
         #yf = -xf*math.sin(45) + yf*math.cos(45)
         #ym = -xm*math.sin(45) + ym*math.cos(45)
         print(f"flag: {xf}, {yf}\n me: {xm}, {ym}")
-        move = False
+        move = True
         if move:
 
-            '''
-            if xm - xf > 12: #moveleft
-                right_click(693, 263)
+            if xm - xf > 20: #moveleft
+                #right_click(693, 263, 1)
+                right_click(837, 358, 0.2)
+                print("LEFT")
 
 
-            if xf - xm > 12: #moveright
-                right_click(1432, 754)
-
-            '''
-            if ym - yf > 6: #moveup
-                click(605, 661)
+            if xf - xm > 20: #moveright
+                #right_click(1432, 754, 1)
+                right_click(1075, 548, 0.2)
+            
+            
+            if ym - yf > 4: #moveup
+                #right_click(1257, 256, 1)
+                right_click(1086, 397, 0.2)
+                print("UP")
                 
 
-            if yf - ym > 6: #movedown
-                click(1257, 256)
+            if yf - ym > 4: #movedown
+                #right_click(605, 661, 1)
+                right_click(832, 540, 0.2)
+                print("DOWn")
 
+            
         time.sleep(0.7)
+    '''
 
+def rotate_image(image, angle):
+  image_center = tuple(np.array(image.shape[1::-1]) / 2)
+  rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+  result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+  return result
 
 def findme(img):
     frame = img
@@ -165,14 +198,14 @@ def findme(img):
         cv2.rectangle(frame,(xm,ym),( xm + w, ym + h ),(90,0,255),2)
         #cv2.imshow("ctr", frame)
         xm, ym = xm + w/2, ym + h/2
-    cv2.imshow("me", frame)
-    cv2.waitKey(0)
+    #cv2.imshow("me", frame)
+    #cv2.waitKey(0)
     return xm, ym
 
 def findflag(img):
     xm, ym = 0, 0
     framegray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    tmp0 = cv2.imread("flag.png", 0)
+    tmp0 = cv2.imread("flag3.png", 0)
     w, h = tmp0.shape[::-1]
     method = eval('cv2.TM_SQDIFF_NORMED')
     res0 = cv2.matchTemplate(framegray, tmp0, method)
