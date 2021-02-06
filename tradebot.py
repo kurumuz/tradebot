@@ -22,6 +22,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 import math
+import sqlite3
+from datetime import datetime
 
 #TODO: CLEAN THE CODE UP
 class Net(nn.Module):
@@ -45,6 +47,10 @@ LOAD_NET=False
 LOAD_YOLOV=True
 global net
 global output
+global database
+database = ""
+global itemname
+itemname = ""
 output = open("output", "a+")
 
 if LOAD_NET:
@@ -60,12 +66,15 @@ if LOAD_YOLOV:
     model.to(device)
 
 def main():
+    init()
     print("basladi")
     global enabled
     global sscount
+    global itemname
     sscount = 0
     
     ss_count_init()
+
     enabled = True
     exitloop = RepeatedTimer(0.1, exitfunc)
     tmp0 = cv2.imread('images/ss1.png', 0) #read the button image
@@ -81,7 +90,9 @@ def main():
     button_coord = [406, 1224, 110, 38]
 
     firstseen = False
-    enabled = False
+    enabled = True
+    enabled2 = True
+    enabled3 = True
     while enabled:
         name = ""
         is_clicked = False
@@ -105,6 +116,7 @@ def main():
             #name = normalizestring(getstring(coordlist[0]))
             print("name:" + item_dict[x] + "|")
             output.write("| " + item_dict[x] + "| : \n")
+            itemname = item_dict[x]
             if True: #if not name == ''
                 is_clicked = clickbutton(tmp0, button_coord)
                 if is_clicked:
@@ -119,9 +131,8 @@ def main():
         output.close()
         enabled = False
 
-    enabled2 = True
-    time.sleep(1)
-    enabled3 = True
+    
+    #time.sleep(1)
     while enabled3:
         sct_img = get_ss(0, 0, 1920, 1080)
         result = model(sct_img, size=800)
@@ -132,8 +143,8 @@ def main():
                     click(int(xcenter), int(ycenter), 0.9)
                     enabled3 = False
 
-                    
-    '''
+
+    
     while enabled2:
         img = get_ss_numpy(1562, 806, 357, 273)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
@@ -173,7 +184,18 @@ def main():
 
             
         time.sleep(0.7)
-    '''
+    
+
+def init():
+    global database
+    if not os.path.exists("db"):
+        os.makedirs("db")
+        print("db klasörü oluşturuldu!")
+    database = sqlite3.connect("db/item.db")
+    cursor = database.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, date TEXT, name TEXT, tier TEXT, ench TEXT, goodness TEXT buyqty REAL, buyprice REAL, sellqty REAL, sellprice REAL)
+                            ''')
 
 def rotate_image(image, angle):
   image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -222,7 +244,15 @@ def findflag(img):
     return xf, yf
     
 def get_price_info(x, y, z, goodness, totier):
+    global itemname
+    global database
+    cursor = database.cursor()
     buy1, buy2, sell1, sell2 = getinfo()
+    now = datetime.now()
+    date_string = now.strftime()
+    cursor.execute(f"INSERT INTO items VALUES (?,?,?,?,?,?,?,?,?)", (date_string, itemname, x+totier, 3-y, goodness[z], buy2, buy1, sell2, sell1))
+
+
     if buy1 == "6009091160905401011":
         buy1 = "NOT"
 
@@ -236,6 +266,7 @@ def get_price_info(x, y, z, goodness, totier):
         sell2 = "SELLING"
 
     info = f"TIER: {x+totier} | ENCH: {3-y} | GOODNESS: {goodness[z]} -> BUY: {buy1}, AM: {buy2} | SELL: {sell1}, AM: {sell2}"
+
     print(info)
     output.writelines(info + "\n")
 
@@ -363,6 +394,8 @@ def exitfunc():
     
     if keyboard.is_pressed('x'):
         enabled = False
+        global database
+        database.close()
         os._exit(0)
 
 def getinfo():
