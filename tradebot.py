@@ -43,8 +43,8 @@ class Net(nn.Module):
         x = self.fc2(x)
         return x
 
-LOAD_NET=False
-LOAD_YOLOV=True
+LOAD_NET=True
+LOAD_YOLOV=False
 global net
 global output
 global database
@@ -71,6 +71,7 @@ def main():
     global enabled
     global sscount
     global itemname
+    global database
     sscount = 0
     
     ss_count_init()
@@ -91,8 +92,8 @@ def main():
 
     firstseen = False
     enabled = True
-    enabled2 = True
-    enabled3 = True
+    enabled2 = False
+    enabled3 = False
     while enabled:
         name = ""
         is_clicked = False
@@ -125,11 +126,12 @@ def main():
                     click(937, 312, 0.3) #close the menu
                     print("ZAMAN: " + str(time.time()-start_time))
                 else:
-                    print("İtem yok, atlanıyor.") #TODO: handle non existant items better by skipping over them.
+                    print("Item yok, atlanıyor.") #TODO: handle non existant items better by skipping over them.
 
         print("BİTTİ!")
         output.close()
         enabled = False
+        database.close()
 
     
     #time.sleep(1)
@@ -194,7 +196,7 @@ def init():
     database = sqlite3.connect("db/item.db")
     cursor = database.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, date TEXT, name TEXT, tier TEXT, ench TEXT, goodness TEXT buyqty REAL, buyprice REAL, sellqty REAL, sellprice REAL)
+        CREATE TABLE IF NOT EXISTS items(id INTEGER PRIMARY KEY, date TEXT, name TEXT, tier TEXT, ench TEXT, goodness TEXT, buyqty TEXT, buyprice TEXT, sellqty TEXT, sellprice TEXT)
                             ''')
 
 def rotate_image(image, angle):
@@ -249,9 +251,9 @@ def get_price_info(x, y, z, goodness, totier):
     cursor = database.cursor()
     buy1, buy2, sell1, sell2 = getinfo()
     now = datetime.now()
-    date_string = now.strftime()
-    cursor.execute(f"INSERT INTO items VALUES (?,?,?,?,?,?,?,?,?)", (date_string, itemname, x+totier, 3-y, goodness[z], buy2, buy1, sell2, sell1))
-
+    date_string = now.strftime("%Y-%m-%dT%H:%M")
+    cursor.execute(f"INSERT INTO items(date, name, tier, ench, goodness, buyqty, buyprice, sellqty, sellprice) VALUES (?,?,?,?,?,?,?,?,?)", (str(date_string), str(itemname), str(x+totier), str(3-y), str(goodness[z]), str(buy2), str(buy1), str(sell2), str(sell1)))
+    database.commit()
 
     if buy1 == "6009091160905401011":
         buy1 = "NOT"
@@ -394,8 +396,6 @@ def exitfunc():
     
     if keyboard.is_pressed('x'):
         enabled = False
-        global database
-        database.close()
         os._exit(0)
 
 def getinfo():
