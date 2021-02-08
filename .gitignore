@@ -12,7 +12,12 @@ char/
 data/
 bot.py
 label.txt
-
+objects/
+flag1.png
+flag2.png
+flag3.png
+testmap.png
+testmap2.png
 .vscode/
 
 # Byte-compiled / optimized / DLL files
