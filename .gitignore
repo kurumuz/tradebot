@@ -19,6 +19,9 @@ flag2.png
 flag3.png
 testmap.png
 testmap2.png
+testcode/
+testimages/
+db/
 .vscode/
 
 # Byte-compiled / optimized / DLL files
