@@ -8,6 +8,7 @@ charb.pth
 mnist.pth
 maybe/
 allah/
+objects/
 char/
 data/
 bot.py

@@ -54,6 +54,7 @@ itemname = ""
 output = open("output", "a+")
 
 if LOAD_NET:
+    device = torch.device("cpu")
     net = Net()
     PATH = './weights/digits.pth'
     net.load_state_dict(torch.load(PATH))
