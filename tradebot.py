@@ -89,12 +89,13 @@ def main():
     item_dict = dict_file.read().split('\n')
     dict_file.close()
     #item_dict = ["Novice's Mercenary Shoes", "Novice's Soldier Helmet", "Adept's Dagger Pair"]
-    button_coord = [406, 1224, 110, 38]
+    button_coord = [int(406//1.406), int(1224//1.406), int(110//1.406), int(38//1.406)]
 
     firstseen = False
     enabled = True
     enabled2 = False
     enabled3 = False
+    time.sleep(3)
     while enabled:
         name = ""
         is_clicked = False
@@ -106,10 +107,10 @@ def main():
             win32clipboard.SetClipboardText(test, win32con.CF_TEXT)
             win32clipboard.CloseClipboard()
             #Point(x=609, y=265)
-            win32api.SetCursorPos((609, 265))
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,609,265,0,0)
+            win32api.SetCursorPos((int(609//1.406), int(265//1.406)))
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,int(609//1.406),int(265//1.406),0,0)
             time.sleep(0.1)
-            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,609,265,0,0)
+            win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,int(609//1.406),int(265//1.406),0,0)
             time.sleep(0.1)
             keyboard.press_and_release('ctrl+a')
             keyboard.press_and_release('backspace')
@@ -274,13 +275,13 @@ def get_price_info(x, y, z, goodness, totier):
     output.writelines(info + "\n")
 
 def get_ss(x, y, w, h):
-    monitor = {"top": y, "left": x, "width": w, "height": h}
+    monitor = {"top": int(y/1.406), "left": int(x/1.406), "width": int(w/1.406), "height": int(h/1.406)}
     with mss.mss() as sct:
         ss = sct.grab(monitor)
     return ss
 
 def get_ss_numpy(x, y, w, h):
-    monitor = {"top": y, "left": x, "width": w, "height": h}
+    monitor = {"top": int(y/1.406), "left": int(x/1.406), "width": int(w/1.406), "height": int(h/1.406)}
     with mss.mss() as sct:
         ss = sct.grab(monitor)
         ss = np.array(ss)
@@ -328,11 +329,11 @@ def clickbutton(tmp0, coord):
         min_val0, max_val0, min_loc0, max_loc0 = cv2.minMaxLoc(res0)
         sim0 = sim_score(min_val0, max_val0, method)
         
-
-        if sim0 > 0.92:
-            x = int(coord[1] + int(min_loc0[0]) + int(w/2))
-            y = int(coord[0] + int(min_loc0[1]) + int(h/2))
-            click(x, y, 0.6)
+        print(sim0)
+        if sim0 > 0.70:
+            x = int(coord[1] + int(min_loc0[0]) + int(w/1.406/2))
+            y = int(coord[0] + int(min_loc0[1]) + int(h/1.406/2))
+            click(int(x*1.406), int(y*1.406), 0.6)
             print(sim0)
             return True
             
@@ -407,15 +408,15 @@ def getinfo():
     return [buy1, buy2, sell1, sell2]
 
 def click(x, y, sleep=0):
-    win32api.SetCursorPos((x, y))
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
+    win32api.SetCursorPos((int(x//1.406), int(y//1.406)))
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,int(x//1.406),int(y//1.406),0,0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,int(x//1.406),int(y//1.406),0,0)
     time.sleep(sleep)
 
 def right_click(x, y, sleep=0):
-    win32api.SetCursorPos((x, y))
-    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN,x,y,0,0)
-    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP,x,y,0,0)
+    win32api.SetCursorPos((x//1.406, y//1.406))
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN,int(x//1.406),int(y//1.406),0,0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP,int(x//1.406),int(y//1.406),0,0)
     time.sleep(sleep)
 
 def wheel_event(move):
@@ -466,12 +467,10 @@ def getnumbernn(coordl):
     with mss.mss() as sct:
         x, y, w, h = coordl
         method = eval('cv2.TM_CCOEFF_NORMED')
-        monitor = {"top": x, "left": y, "width": w, "height": h}
+        monitor = {"top": int(x//1.406), "left": int(y//1.406), "width": int(w//1.406), "height": int(h//1.406)}
         ss = np.array(sct.grab(monitor))
-        img = cv2.resize(ss ,None, fx = 5, fy = 5, interpolation = cv2.INTER_CUBIC)
+        img = cv2.resize(ss ,None, fx = 3, fy = 3, interpolation = cv2.INTER_CUBIC)
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-
-        cv2.waitKey(0)
 
         #binarize 
         ret,thresh = cv2.threshold(gray,127,255,cv2.THRESH_BINARY_INV)
@@ -486,14 +485,7 @@ def getnumbernn(coordl):
         for i, ctr in enumerate(sorted_ctrs):
         # Get bounding box
             x, y, w, h = cv2.boundingRect(ctr)
-            if h > 20:
-                # Getting ROI
-                if w < 18:
-                    x = int(x - w/1.2)
-                    if x < 0:
-                        x = 0
-                    w = 27
-
+            if h > 10:
                 roi = gray[y:y+h, x:x+w]
                 #cv2.imsave()
                 if roi.any():
@@ -506,15 +498,20 @@ def getnumbernn(coordl):
                         output = net(roitensor)
                         _, predicted = torch.max(output.data, 1)
                         predicted_str += str(predicted.item())
+                    cv2.rectangle(img,(x,y),( x + w, y + h ),(90,0,255),2)
+
                 else:
                     print("FUCK")
+
+        cv2.imshow('marked areas',gray)
+        cv2.waitKey(0)
         return predicted_str
 
 def getnumber(coordl):
     with mss.mss() as sct:
         x, y, w, h = coordl
         method = eval('cv2.TM_CCOEFF_NORMED')
-        monitor = {"top": x, "left": y, "width": w, "height": h}
+        monitor = {"top": int(x//1.406), "left": int(y//1.406), "width": int(w//1.406), "height": int(h//1.406)}
         ss = sct.grab(monitor)
         imageor = cv2.cvtColor(np.array(ss), cv2.COLOR_BGR2GRAY)
         image = cv2.cvtColor(np.array(ss), cv2.COLOR_BGR2GRAY)
@@ -539,7 +536,7 @@ def getnumber(coordl):
 def getstring(coordl):
     with mss.mss() as sct:
         x, y, w, h = coordl
-        monitor = {"top": x, "left": y, "width": w, "height": h}
+        monitor = {"top": int(x//1.406), "left": int(y//1.406), "width": int(w//1.406), "height": int(h//1.406)}
         ss = sct.grab(monitor)
         '''
         imgsell = Image.frombytes("RGB", ss.size, ss.bgra, "raw", "BGRX")
