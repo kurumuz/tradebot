@@ -129,6 +129,7 @@ def main():
 
         print("BİTTİ!")
         output.close()
+        database.close()
         enabled = False
 
     
@@ -251,7 +252,7 @@ def get_price_info(x, y, z, goodness, totier):
     now = datetime.now()
     date_string = now.strftime()
     cursor.execute(f"INSERT INTO items VALUES (?,?,?,?,?,?,?,?,?)", (date_string, itemname, x+totier, 3-y, goodness[z], buy2, buy1, sell2, sell1))
-
+    database.commit()
 
     if buy1 == "6009091160905401011":
         buy1 = "NOT"
